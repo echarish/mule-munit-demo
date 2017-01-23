@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd">
+	<http:listener-config name="HTTP_Listener_Configuration"
+		host="0.0.0.0" port="${http.port}" doc:name="HTTP Listener Configuration" />
+	<context:property-placeholder
+		 
+		location="application-setting.properties,application-setting-2.properties" />
+	<flow name="main-flow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/mutest" doc:name="HTTP">
+            <http:response-builder statusCode="200" reasonPhrase="OKHai" disablePropertiesAsHeaders="true">
+                <http:header headerName="sessionid" value="24385"/>
+                <http:header headerName="onemoreprop" value="ggjghj"/>
+            </http:response-builder>
+            <http:error-response-builder statusCode="500" reasonPhrase="FatGaya"/>
+        </http:listener>
+		<set-payload
+			value="#[message.inboundProperties.'http.query.params'.['decisionKey']]"
+			doc:name="Set Payload" />
+		<flow-ref name="decisionFlow" doc:name="decisionFlow" />
+		<choice doc:name="Choice">
+			<when expression="#[flowVars.decisionVariable.equals('decision1')]">
+				<set-payload value="#['Decision 1 was taken']" doc:name="Set Response Payload" />
+			</when>
+			<otherwise>
+				<set-payload value="#['Decision 2 was taken']" doc:name="Set Response Payload" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="decisionFlow">
+		<choice doc:name="Choice">
+			<when expression="#['value1'.equals(payload)]">
+				<flow-ref name="decision1SubFlow" doc:name="decision1SubFlow" />
+			</when>
+			<otherwise>
+				<flow-ref name="decision2SubFlow" doc:name="decision2SubFlow" />
+			</otherwise>
+		</choice>
+	</flow>
+	<sub-flow name="decision1SubFlow">
+		<set-variable variableName="decisionVariable" value="#['decision1']"
+			doc:name="decisionVariable" />
+	</sub-flow>
+	<sub-flow name="decision2SubFlow">
+		<set-variable variableName="decisionVariable" value="#['decision2']"
+			doc:name="decisionVariable" />
+	</sub-flow>
+</mule>
